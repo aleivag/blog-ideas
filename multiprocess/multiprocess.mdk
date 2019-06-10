@@ -1,0 +1,69 @@
+Title         : Multiprocess
+Author        : Alvaro Leiva Geisse
+Logo          : True
+
+[TITLE]
+
+Lets start with the simplest of concurrencies, multiprocess. At the end of the day its siumple to start with this one, because is the safest one, and its super powerfull, and for simplest cases, this is enought. the disadvantages of multiprossesing is that: a) its more expensive, and b) you cant (easily) share state.
+
+so, whats multiprocessing?, well as the name imply, you'll execute the concurrent task, on a diferent process. this means that at soime poibt, your code will execute a `fork` and begin a new proces to execute whatever target you give it (we'll worry about wat target means later). since your code `fork` but dont `exec` , your child process has access to a copy of many globals of the parent process.
+
+since multiprocessing is really another proccess, there is no GIL.
+
+Ok enough chit chat, lets code.
+
+
+```python
+
+import request
+
+def get_webpage(wp: str) -> str:
+    return request.get(wp).text
+
+if __name__ == "__main__":
+    
+
+```
+
+
+# change user
+
+Some usefull thing that you may want to do, its to make the user that execute the
+
+```python
+ 
+from multiprocessing import Process
+
+import pwd
+import os
+
+
+class UserProcess(Process):
+    def __init__(self, *args, uid=None, gid=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.uid = uid
+        self.gid = gid
+
+    def _bootstrap(self):
+        if self.gid:
+            os.setgid(self.gid)
+
+        if self.uid:
+            os.setuid(self.uid)
+
+        return super()._bootstrap()
+
+
+def report_ids():
+    print(f"uid, gid = {os.getuid()}, {os.getgid()}")
+
+
+if __name__ == "__main__":
+    report_ids()
+
+    pw_record = pwd.getpwnam("aleivag")
+    UserProcess(target=report_ids, uid=pw_record.pw_uid, gid=pw_record.pw_gid).start()
+
+    report_ids()
+ 
+ ```
